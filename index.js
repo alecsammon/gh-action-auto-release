@@ -1,55 +1,37 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
-try {
-    const token = core.getInput("github-token", { required: true });
-    const octokit = github.getOctokit(token);
+async function run() {
+    const githubToken = core.getInput("github-token", { required: true })
+    const octokit = github.getOctokit(githubToken)
 
-    const labelNames = await getPullRequestLabelNames(octokit);
-    core.debug(`PR label names: ${labelNames}`);
+    console.log({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: github.context.issue.number,
+    })
 
-    const labels = getInputLabels();
-    core.debug(`Input labels: ${labels}`);
+    const { data: pullRequest } = await octokit.rest.issues.get({
+        owner: github.context.repo.owner,
+        repo: github.context.repo.repo,
+        issue_number: github.context.issue.number,
+    });
 
-    core.setOutput("result", labels);
+    const labels = pullRequest.labels.filter(l => ["release:none", "release:patch", "release:minor", "release:major"].includes(l.name));
 
-    core.debug("End");
-} catch (error) {
-    core.setFailed(error.message);
+    if (labels.length !== 1) {
+        await octokit.rest.issues.createComment({
+            issue_number: github.context.issue.number,
+            owner: github.context.repo.owner,
+            repo: github.context.repo.repo,
+            body: 'Must have one of the following labels: "release:none", "release:patch", "release:minor", "release:major"'
+        })
+
+        core.setFailed('Must have one of the following labels: "release:none", "release:patch", "release:minor", "release:major"')
+    }
 }
 
-async function getPullRequestLabelNames(octokit) {
-    const owner = github.context.repo.owner;
-    const repo = github.context.repo.repo;
-    const commit_sha = github.context.sha;
-    core.debug(
-        `PR context - Owner: ${owner} Repo: ${repo} Commit_SHA: ${commit_sha}`
-    );
-
-    const response =
-        await octokit.rest.repos.listPullRequestsAssociatedWithCommit({
-            owner,
-            repo,
-            commit_sha,
-        });
-    core.debug(`Retrieved commit data: ${response.data}`);
-
-    const pr = response.data.length > 0 && response.data[0];
-    core.debug(`Retrieved PR: ${pr}`);
-
-    return pr ? pr.labels.map((label) => label.name || "") : [];
-}
-
-function getInputLabels() {
-    const raw = core.getInput("labels", { required: true });
-    core.debug(`Get input "labels": ${raw}`);
-
-    const json = JSON.parse(raw);
-    core.debug(`Parsed as JSON: ${json}`);
-
-    return Array.isArray(json) ? json : [];
-}
-
-run().catch((err) => {
-    core.setFailed(`Action failed with error: ${err.message}`);
-});
+run().catch(e => {
+    core.error(e)
+    core.setFailed(e.message)
+})
