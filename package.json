@@ -1,0 +1,14 @@
+{
+  "name": "gh-action-auto-release",
+  "version": "0.1.0",
+  "description": "Creates GitHub releases on PR merge based on labels",
+  "main": "index.js",
+  "repository": "git@github.com:alecsammon/gh-action-auto-release.git",
+  "author": "Alec Sammon <alec.sammon@paddle.com>",
+  "license": "MIT",
+  "private": false,
+  "dependencies": {
+    "@actions/core": "^1.10.0",
+    "@actions/github": "^5.1.1"
+  }
+}

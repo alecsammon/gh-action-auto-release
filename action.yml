@@ -1,0 +1,9 @@
+name: 'Auto Release'
+description: 'Creates GitHub releases on PR merge based on labels'
+inputs:
+  github-token:
+    description: 'The repository token, i.e. secrets.GITHUB_TOKEN'
+    required: true
+runs:
+  using: 'node16'
+  main: 'index.js'
