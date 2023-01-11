@@ -10,6 +10,8 @@ async function run() {
     const token = core.getInput("github-token", { required: true });
     const octokit = github.getOctokit(token);
 
+    core.debug(github.event.pull_request)
+
     const labelNames = await getPullRequestLabelNames(octokit);
     core.debug(`PR label names: ${labelNames}`);
 
