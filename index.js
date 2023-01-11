@@ -1,7 +1,12 @@
 const core = require('@actions/core');
 const github = require('@actions/github');
 
-try {
+run().catch(error => {
+    core.setFailed(error.message);
+});
+
+
+async function run() {
     const token = core.getInput("github-token", { required: true });
     const octokit = github.getOctokit(token);
 
@@ -14,8 +19,6 @@ try {
     core.setOutput("result", labels);
 
     core.debug("End");
-} catch (error) {
-    core.setFailed(error.message);
 }
 
 async function getPullRequestLabelNames(octokit) {
